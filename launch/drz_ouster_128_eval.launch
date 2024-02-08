@@ -4,7 +4,7 @@
     <arg name="rviz" default="false" />
     <param name="/use_sim_time" value="true" />
 
-    <rosparam command="load" file="$(find fast_lio)/config/ouster128.yaml" />
+    <rosparam command="load" file="$(find fast_lio)/config/drz_ouster128.yaml" />
 
     <param name="dont_compensate" type="bool" value="false"/>
     <param name="has_lidar_end_time" type="bool" value="false"/>
@@ -13,7 +13,7 @@
     <param name="max_iteration" type="int" value="3" />
     <param name="filter_size_surf" type="double" value="0.5" />
     <param name="filter_size_map" type="double" value="0.5" />
-    <param name="cube_side_length" type="double" value="500" />
+    <param name="cube_side_length" type="double" value="1000" />
     <param name="runtime_pos_log_enable" type="bool" value="false" />
     <node  pkg="fast_lio" type="fastlio_mapping" name="laserMapping" output="screen" /> 
 
