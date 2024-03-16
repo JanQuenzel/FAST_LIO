@@ -5,6 +5,8 @@
 
 using namespace std;
 
+#define WITH_AMBIENT // for newer college dataset
+
 #define IS_VALID(a)  ((abs(a)>1e8) ? true : false)
 
 typedef pcl::PointXYZINormal PointType;
@@ -19,7 +21,7 @@ enum E_jump{Nr_nor, Nr_zero, Nr_180, Nr_inf, Nr_blind};
 struct orgtype
 {
   double range;
-  double dista; 
+  double dista;
   double angle[2];
   double intersect;
   E_jump edj[2];
@@ -59,7 +61,11 @@ namespace ouster_ros {
       uint32_t t;
       uint16_t reflectivity;
       uint8_t  ring;
-      uint16_t noise; //ambient;
+#ifndef WITH_AMBIENT
+      uint16_t noise; // nc, drz
+#else
+      uint16_t ambient; // nce
+#endif
       uint32_t range;
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };
@@ -75,7 +81,11 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(ouster_ros::Point,
     (std::uint32_t, t, t)
     (std::uint16_t, reflectivity, reflectivity)
     (std::uint8_t, ring, ring)
-    (std::uint16_t, noise, noise) //(std::uint16_t, ambient, ambient)
+#ifndef WITH_AMBIENT
+    (std::uint16_t, noise, noise) // nc, drz
+#else
+    (std::uint16_t, ambient, ambient) // nce
+#endif
     (std::uint32_t, range, range)
 )
 
@@ -96,6 +106,7 @@ class Preprocess
   PointCloudXYZI pl_buff[128]; //maximum 128 line lidar
   vector<orgtype> typess[128]; //maximum 128 line lidar
   float time_unit_scale;
+  float max_curvature;
   int lidar_type, point_filter_num, N_SCANS, SCAN_RATE, time_unit;
   double blind;
   bool feature_enabled, given_offset_time;

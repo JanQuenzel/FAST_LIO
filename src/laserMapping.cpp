@@ -102,6 +102,7 @@ vector<BoxPointType> cub_needrm;
 vector<PointVector>  Nearest_Points; 
 vector<double>       extrinT(3, 0.0);
 vector<double>       extrinR(9, 0.0);
+deque<double>                     max_curvature;
 deque<int64_t>                    time_buffer_ns;
 deque<double>                     time_buffer;
 deque<PointCloudXYZI::Ptr>        lidar_buffer;
@@ -303,6 +304,7 @@ void standard_pcl_cbk(const sensor_msgs::PointCloud2::ConstPtr &msg)
         p_pre_raw->process(msg, ptr_raw);
         lidar_buffer_raw.push_back(ptr_raw);
     }
+    max_curvature.push_back(p_pre->max_curvature);
     time_buffer_ns.push_back(msg->header.stamp.toNSec());
     time_buffer.push_back(msg->header.stamp.toSec());
     last_timestamp_lidar = msg->header.stamp.toSec();
@@ -340,6 +342,7 @@ void livox_pcl_cbk(const livox_ros_driver::CustomMsg::ConstPtr &msg)
     PointCloudXYZI::Ptr  ptr(new PointCloudXYZI());
     p_pre->process(msg, ptr);
     lidar_buffer.push_back(ptr);
+    max_curvature.push_back(p_pre->max_curvature);
     time_buffer_ns.push_back(msg->header.stamp.toNSec());
     time_buffer.push_back(last_timestamp_lidar);
     
@@ -390,6 +393,7 @@ bool sync_packages(MeasureGroup &meas)
     if(!lidar_pushed)
     {
         meas.lidar = lidar_buffer.front();
+        double  lidar_max_curvature = max_curvature.front();
         double  lidar_beg_time = time_buffer.front();
         lidar_ts_ns = time_buffer_ns.front();
         if ( has_lidar_end_time_ )
@@ -400,15 +404,15 @@ bool sync_packages(MeasureGroup &meas)
                 lidar_beg_time = lidar_end_time - lidar_mean_scantime;
                 ROS_WARN("Too few input point cloud!\n");
             }
-            else if (meas.lidar->points.back().curvature / double(1000) < 0.5 * lidar_mean_scantime)
+            else if (lidar_max_curvature / double(1000) < 0.5 * lidar_mean_scantime)
             {
                 lidar_beg_time = lidar_end_time - lidar_mean_scantime;
             }
             else
             {
                 scan_num ++;
-                lidar_beg_time = lidar_end_time - meas.lidar->points.back().curvature / double(1000);
-                lidar_mean_scantime += (meas.lidar->points.back().curvature / double(1000) - lidar_mean_scantime) / scan_num;
+                lidar_beg_time = lidar_end_time - lidar_max_curvature / double(1000);
+                lidar_mean_scantime += (lidar_max_curvature / double(1000) - lidar_mean_scantime) / scan_num;
             }
         }
         else
@@ -418,15 +422,15 @@ bool sync_packages(MeasureGroup &meas)
                 lidar_end_time = lidar_beg_time + lidar_mean_scantime;
                 ROS_WARN("Too few input point cloud!\n");
             }
-            else if (meas.lidar->points.back().curvature / double(1000) < 0.5 * lidar_mean_scantime)
+            else if (lidar_max_curvature / double(1000) < 0.5 * lidar_mean_scantime)
             {
                 lidar_end_time = lidar_beg_time + lidar_mean_scantime;
             }
             else
             {
                 scan_num ++;
-                lidar_end_time = lidar_beg_time + meas.lidar->points.back().curvature / double(1000);
-                lidar_mean_scantime += (meas.lidar->points.back().curvature / double(1000) - lidar_mean_scantime) / scan_num;
+                lidar_end_time = lidar_beg_time + lidar_max_curvature / double(1000);
+                lidar_mean_scantime += (lidar_max_curvature / double(1000) - lidar_mean_scantime) / scan_num;
             }
         }
 
@@ -465,6 +469,7 @@ bool sync_packages(MeasureGroup &meas)
 
     lidar_buffer.pop_front();
     if ( ! lidar_buffer_raw.empty() ) lidar_buffer_raw.pop_front();
+    max_curvature.pop_front();
     time_buffer_ns.pop_front();
     time_buffer.pop_front();
     lidar_pushed = false;
@@ -780,13 +785,14 @@ void h_share_model(state_ikfom &s, esekfom::dyn_share_datastruct<double> &ekfom_
     }
     
     effct_feat_num = 0;
-
+    laserCloudOri->points.reserve(feats_down_size);
+    corr_normvect->points.reserve(feats_down_size);
     for (int i = 0; i < feats_down_size; i++)
     {
         if (point_selected_surf[i])
         {
-            laserCloudOri->points[effct_feat_num] = feats_down_body->points[i];
-            corr_normvect->points[effct_feat_num] = normvec->points[i];
+            laserCloudOri->points.emplace_back(feats_down_body->points[i]);
+            corr_normvect->points.emplace_back(normvec->points[i]);
             total_residual += res_last[i];
             effct_feat_num ++;
         }
