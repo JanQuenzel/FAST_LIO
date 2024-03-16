@@ -41,7 +41,7 @@ namespace velodyne_ros {
       PCL_ADD_POINT4D;
       float intensity;
       float time;
-      uint16_t ring;
+      std::uint16_t ring;
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };
 }  // namespace velodyne_ros
@@ -51,22 +51,22 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(velodyne_ros::Point,
     (float, z, z)
     (float, intensity, intensity)
     (float, time, time)
-    (uint16_t, ring, ring)
+    (std::uint16_t, ring, ring)
 )
 
 namespace ouster_ros {
   struct EIGEN_ALIGN16 Point {
       PCL_ADD_POINT4D;
       float intensity;
-      uint32_t t;
-      uint16_t reflectivity;
-      uint8_t  ring;
+      std::uint32_t t;
+      std::uint16_t reflectivity;
+      std::uint8_t  ring;
 #ifndef WITH_AMBIENT
-      uint16_t noise; // nc, drz
+      std::uint16_t noise; // nc, drz
 #else
-      uint16_t ambient; // nce
+      std::uint16_t ambient; // nce
 #endif
-      uint32_t range;
+      std::uint32_t range;
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };
 }  // namespace ouster_ros
