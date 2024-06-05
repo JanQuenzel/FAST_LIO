@@ -1,6 +1,6 @@
 common:
-    lid_topic:  "/os_cloud_node/points"
-    #imu_topic:  "/os_cloud_node/imu"
+    lid_topic:  "/ouster/points"
+    #imu_topic:  "/ouster/imu"
     imu_topic:  "/dji_sdk/imu"
     time_sync_en: false         # ONLY turn on when external time synchronization is really not possible
     
@@ -30,7 +30,7 @@ mapping:
     #              -1,  0,  0,
     #               0,  0, -1]
     # m210 - mbzirc8
-    extrinsic_T: [ 0.0982146, 0.031775, -0.210836 ]
+    extrinsic_T: [ 0.083, 0.0, -0.210 ]
     extrinsic_R: [ 0, -1,  0,
                   -1,  0,  0,
                    0,  0, -1]
